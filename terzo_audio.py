@@ -21,7 +21,8 @@ def list_to_string(tlist) -> str:
 def site_stamp(r_url = 'http://www.terzotech.net') -> str:
 	"""Produce site name stamp from site URL for save file name."""
 	# print(r_url[:7])
-	r_url = "https://www.dw.com/en/top-stories/s-9097"
+	# Typical use case with lots of forward slash
+	#r_url = "https://www.dw.com/en/top-stories/s-9097"
 	if r_url[:8] == "https://":
 		r_url = r_url[8:]
 	if r_url[:7] == "http://":
@@ -100,6 +101,30 @@ def main_old() -> None:
 def fetch_text(t_url: str) -> bool:
 	"""Capture web page text and save to disk"""
 	print("Menu option fetch text")
+	response = requests.get(t_url)
+	soup = BeautifulSoup(response.text, 'html.parser')
+	print_list = []
+	tag_list = soup.find_all()
+
+	"""Iterate through tag list, selecting
+	image alt text and tag strings,
+	while skipping duplicates
+	ctag is Current Tag
+	1. Acquire candidate string from current tag
+	2. Split cstring and check for length
+	3. Check whether cstring is already in list
+	4. Append cstring to list
+	"""
+	for ctag in tag_list:
+		if ctag.get("alt") and (ctag["alt"] not in print_list):
+			print_list.append(ctag["alt"])
+		if ctag.get("title") and (ctag["title"] not in print_list):
+			print_list.append(ctag["title"])
+		if ctag.name in ['p', 'a', "blockquote"] and ctag.string and (ctag.string not in print_list):
+			print_list.append(ctag.string)
+
+	with open(f"../text/{datestamp()}_{site_stamp(t_url)}.txt", "w") as fhandler:
+			fhandler.write(list_to_string(print_list))
 	return True
 
 def fetch_code(t_url: str) -> bool:
@@ -137,13 +162,14 @@ def main() -> None:
 			print(target_url)
 		else:
 			print(f"User: {menu_input_one}")
-			target_url = u_input
-		print("[A]udio, [C]ode or [B]oth")
-		menu_input_two = input("[> ")
-		if menu_input_two.lower() in ["a", "audio", "t", "text"]:
-			fetch_text(target_url)
-		elif menu_input_two.lower() in ["c", "code"]:
-			fetch_code(target_url)
+			target_url = menu_input_one
+		if menu_input_one.lower() not in ["x", "exit", "q", "quit"]:
+			print("[A]udio, [C]ode or [B]oth")
+			menu_input_two = input("[> ")
+			if menu_input_two.lower() in ["a", "audio", "t", "text"]:
+				fetch_text(target_url)
+			elif menu_input_two.lower() in ["c", "code"]:
+				fetch_code(target_url)
 		elif menu_input_two.lower() in ["b", "both"]:
 			fetch_text_and_code(target_url)
 
