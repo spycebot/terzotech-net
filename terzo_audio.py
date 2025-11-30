@@ -41,62 +41,12 @@ def length_to_list_of_strings(t_length: int) -> list:
 		out.append(str(clv))
 	return out
 
-def main_old() -> None:
-	"""Coordinating function"""
-
-	site_url = "http://terzotech.net"
-
-	print("Site:", site_url)
-
-	print("[Enter] to acept, [X] to exit, or enter new URL")
-
-	# User URL
-	u_url = input()
-
-	print("u_url:",  str(u_url))
-
-	if u_url.lower() in ["x", "exit"]:
-		exit()
-
-	if u_url == "":
-		response = requests.get(site_url)
-	else:
-		response = requests.get(u_url)
-
-	# response = requests.get("https://www.dw.com/en/top-stories/s-9097")
-
-	soup = BeautifulSoup(response.text, 'html.parser')
-
-	# print(soup.prettify())
-
-	print_list = []
-	tag_list = soup.find_all()
-
-	"""Iterate through tag list, selecting
-	image alt text and tag strings,
-	while skipping duplicates
-	ctag is Current Tag
-	1. Acquire candidate string from current tag
-	2. Split cstring and check for length
-	3. Check whether cstring is already in list
-	4. Append cstring to list
-	"""
-	for ctag in tag_list:
-	# 	print(ctag)
-		if ctag.get("alt") and (ctag["alt"] not in print_list):
-			print_list.append(ctag["alt"])
-		if ctag.get("title") and (ctag["title"] not in print_list):
-			print_list.append(ctag["title"])
-		if ctag.name in ['p', 'a', "blockquote"] and ctag.string and (ctag.string not in print_list):
-			print_list.append(ctag.string)
-
-	print("Finally:")
-
-	for citem in print_list:
-		print(citem)
-
-	with open(f"../text/{datestamp()}_{site_stamp()}.txt", "w") as fhandler:
-			fhandler.write(list_to_string(print_list))
+def sentence_length_test(s_string: str) -> bool:
+	"""Split line and return true if more than three words"""
+	s_list = s_string.split(" ")
+	if len(s_list) > 3:
+		return True
+	return False
 
 def fetch_text(t_url: str) -> bool:
 	"""Capture web page text and save to disk"""
@@ -116,11 +66,11 @@ def fetch_text(t_url: str) -> bool:
 	4. Append cstring to list
 	"""
 	for ctag in tag_list:
-		if ctag.get("alt") and (ctag["alt"] not in print_list):
+		if ctag.get("alt") and (sentence_length_test(ctag["alt"])) and (ctag["alt"] not in print_list):
 			print_list.append(ctag["alt"])
-		if ctag.get("title") and (ctag["title"] not in print_list):
+		if ctag.get("title") and (sentence_length_test(ctag["title"])) and (ctag["title"] not in print_list):
 			print_list.append(ctag["title"])
-		if ctag.name in ['p', 'a', "blockquote"] and ctag.string and (ctag.string not in print_list):
+		if ctag.name in ['p', 'a', "blockquote"] and ctag.string and (sentence_length_test(ctag.string)) and (ctag.string not in print_list):
 			print_list.append(ctag.string)
 
 	with open(f"../text/{datestamp()}_{site_stamp(t_url)}.txt", "w") as fhandler:
