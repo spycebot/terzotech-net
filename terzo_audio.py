@@ -2,8 +2,9 @@
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
+from gtts import gTTS
 
-def datestamp() -> str:
+def date_stamp() -> str:
 	"""Pass back a date stamp string
 	appropriately formatted for appending
 	onto a file name."""
@@ -41,14 +42,26 @@ def length_to_list_of_strings(t_length: int) -> list:
 		out.append(str(clv))
 	return out
 
-def sentence_length_test(s_string: str) -> bool:
+def sentence_length_test(s_string: str) 	-> bool:
 	"""Split line and return true if more than three words"""
 	s_list = s_string.split(" ")
 	if len(s_list) > 3:
 		return True
 	return False
 
-def fetch_text(t_url: str) -> bool:
+def generate_audio(text_in: str, site_name: str) -> bool:
+	"""Use gTTS to generate audio and save to file on disk"""
+	print("Generating audio...")
+	try:
+		tts = gTTS(text_in)
+		tts.save(f"../audio/{date_stamp()}_{site_stamp(site_name)}.mp3")
+	except Exception as e:
+		print(f"Audio generation error: {e}")
+		return False
+	print("Audio generation complete.")
+
+
+def fetch_text(t_url: str) -> bool:	
 	"""Capture web page text and save to disk"""
 	print("Menu option fetch text")
 	response = requests.get(t_url)
@@ -72,14 +85,21 @@ def fetch_text(t_url: str) -> bool:
 			print_list.append(ctag["title"])
 		if ctag.name in ['p', 'a', "blockquote"] and ctag.string and (sentence_length_test(ctag.string)) and (ctag.string not in print_list):
 			print_list.append(ctag.string)
-
-	with open(f"../text/{datestamp()}_{site_stamp(t_url)}.txt", "w") as fhandler:
-			fhandler.write(list_to_string(print_list))
+	# Rendered text or ready text
+	r_text = list_to_string(print_list)
+	with open(f"../text/{date_stamp()}_{site_stamp(t_url)}.txt", "w") as fhandler:
+		# fhandler.write(list_to_string(print_list))
+		fhandler.write(r_text)
+	generate_audio(r_text, t_url)
 	return True
 
 def fetch_code(t_url: str) -> bool:
 	"""Capture web page code (HTML) and save to disk"""
 	print("Menu option fetch code")
+	response = requests.get(t_url)
+	soup = BeautifulSoup(response.text, 'html.parser')
+	with open(f"../text/{date_stamp()}_{site_stamp(t_url)}_HTML.txt", "w") as fhandler:
+			fhandler.write(soup.prettify())
 	return True
 
 def fetch_text_and_code(t_url: str) -> bool:
@@ -92,6 +112,7 @@ def main() -> None:
 	instructions = "Enter site number,\nnew URL, \nor [x] to eXit."
 	site_list = [
 		"http://terzotech.net",
+		"https://informationarbitrage.org/",
 		"https://www.dw.com/en/top-stories/s-9097",
 		"https://www.rte.ie/news/",
 		"https://www.nytimes.com/",
