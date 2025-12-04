@@ -60,13 +60,20 @@ def generate_audio(text_in: str, site_name: str) -> bool:
 		return False
 	print("Audio generation complete.")
 
+def make_soup(t_url: str) -> BeautifulSoup:
+	"""Perform URL fetch and return a lovely soup"""
+	response = requests.get(t_url)
+	new_soup = BeautifulSoup(response.text, 'html.parser')
+	# print("soup type:", type(new_soup))
+	# print(isinstance(new_soup, BeautifulSoup))
+		
+	return new_soup
 
 def fetch_text(t_url: str) -> bool:	
 	"""Capture web page text and save to disk"""
 	print("Menu option fetch text")
-	response = requests.get(t_url)
-	soup = BeautifulSoup(response.text, 'html.parser')
 	print_list = []
+	soup = make_soup(t_url)
 	tag_list = soup.find_all()
 
 	"""Iterate through tag list, selecting
@@ -74,17 +81,18 @@ def fetch_text(t_url: str) -> bool:
 	while skipping duplicates
 	ctag is Current Tag
 	1. Acquire candidate string from current tag
-	2. Split cstring and check for length
-	3. Check whether cstring is already in list
-	4. Append cstring to list
+	2. Strip leading and trailing whitespace (e.g cnn.com)
+	3. Split cstring and check for length
+	4. Check whether cstring is already in list
+	5. Append cstring to list
 	"""
 	for ctag in tag_list:
 		if ctag.get("alt") and (sentence_length_test(ctag["alt"])) and (ctag["alt"] not in print_list):
 			print_list.append(ctag["alt"])
 		if ctag.get("title") and (sentence_length_test(ctag["title"])) and (ctag["title"] not in print_list):
 			print_list.append(ctag["title"])
-		if ctag.name in ['p', 'a', "blockquote"] and ctag.string and (sentence_length_test(ctag.string)) and (ctag.string not in print_list):
-			print_list.append(ctag.string)
+		if ctag.name in ['p', 'a', "blockquote", "div"] and ctag.string and (sentence_length_test(ctag.string.strip())) and (ctag.string not in print_list):
+			print_list.append(ctag.string.strip())
 	# Rendered text or ready text
 	r_text = list_to_string(print_list)
 	with open(f"../text/{date_stamp()}_{site_stamp(t_url)}.txt", "w") as fhandler:
@@ -96,8 +104,9 @@ def fetch_text(t_url: str) -> bool:
 def fetch_code(t_url: str) -> bool:
 	"""Capture web page code (HTML) and save to disk"""
 	print("Menu option fetch code")
-	response = requests.get(t_url)
-	soup = BeautifulSoup(response.text, 'html.parser')
+	# response = requests.get(t_url)
+	# soup = BeautifulSoup(response.text, 'html.parser')
+	soup = make_soup(t_url)
 	with open(f"../text/{date_stamp()}_{site_stamp(t_url)}_HTML.txt", "w") as fhandler:
 			fhandler.write(soup.prettify())
 	return True
