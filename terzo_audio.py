@@ -69,6 +69,10 @@ def make_soup(t_url: str) -> BeautifulSoup:
 		
 	return new_soup
 
+def make_text(n_soup: BeautifulSoup) -> bool:
+	"""Take soup in, save text out, to disk"""
+	return True
+
 def fetch_text(t_url: str) -> bool:	
 	"""Capture web page text and save to disk"""
 	print("Menu option fetch text")
@@ -91,7 +95,7 @@ def fetch_text(t_url: str) -> bool:
 			print_list.append(ctag["alt"])
 		if ctag.get("title") and (sentence_length_test(ctag["title"])) and (ctag["title"] not in print_list):
 			print_list.append(ctag["title"])
-		if ctag.name in ['p', 'a', "blockquote", "div"] and ctag.string and (sentence_length_test(ctag.string.strip())) and (ctag.string not in print_list):
+		if ctag.name in ['p', 'a', "blockquote", "div", "pre", "li", "code"] and ctag.string and (sentence_length_test(ctag.string.strip())) and (ctag.string not in print_list):
 			print_list.append(ctag.string.strip())
 	# Rendered text or ready text
 	r_text = list_to_string(print_list)
@@ -114,6 +118,9 @@ def fetch_code(t_url: str) -> bool:
 def fetch_text_and_code(t_url: str) -> bool:
 	"""Capture web page, save text as text, and save code as code"""
 	print("Menu optiom fetch text and code""")
+	c_soup = make_soup(t_url)
+	print(fetch_text(c_soup))
+	print(fetch_code(c_soup))
 	return True
 
 def main() -> None:
@@ -125,7 +132,8 @@ def main() -> None:
 		"https://www.dw.com/en/top-stories/s-9097",
 		"https://www.rte.ie/news/",
 		"https://www.nytimes.com/",
-		"https://edition.cnn.com/"
+		"https://edition.cnn.com/",
+		"https://www.csmonitor.com/"
 	]
 	for m_option in range(len(site_list)):
 		print(f"[{m_option}] {site_list[m_option]}")
@@ -144,9 +152,9 @@ def main() -> None:
 			print(f"User: {menu_input_one}")
 			target_url = menu_input_one
 		if menu_input_one.lower() not in ["x", "exit", "q", "quit"]:
-			print("[A]udio, [C]ode or [B]oth")
+			print("[A]udio ([Enter]), [C]ode or [B]oth")
 			menu_input_two = input("[> ")
-			if menu_input_two.lower() in ["a", "audio", "t", "text"]:
+			if menu_input_two.lower() in ["a", "audio", "t", "text", ""]:
 				fetch_text(target_url)
 			elif menu_input_two.lower() in ["c", "code"]:
 				fetch_code(target_url)
